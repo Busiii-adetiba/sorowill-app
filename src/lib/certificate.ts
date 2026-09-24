@@ -6,6 +6,16 @@ import { formatDeadline, formatUSDC, WillStatus, type Will } from '@sorowill/sdk
 import { nextCheckinDeadline } from '@/lib/deadlines';
 
 /**
+ * Generates a QR code data URL entirely client-side for `data`, so the
+ * encoded value (e.g. a verification URL embedding a will id) is never
+ * sent to a third-party image API. Uses the same bundled `qrcode`
+ * package already relied on for the PDF export below.
+ */
+export async function generateQrDataUrl(data: string, width = 240): Promise<string> {
+  return QRCode.toDataURL(data, { margin: 1, width });
+}
+
+/**
  * Generates and downloads a PDF "certificate" summarizing `will`'s public,
  * on-chain terms, with a QR code and link back to `verifyUrl` for
  * independent confirmation. Only ever reads fields already present on
@@ -13,7 +23,7 @@ import { nextCheckinDeadline } from '@/lib/deadlines';
  * material, which this app never has access to in the first place.
  */
 export async function downloadWillCertificate(will: Will, verifyUrl: string): Promise<void> {
-  const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
+  const qrDataUrl = await generateQrDataUrl(verifyUrl);
 
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const marginX = 56;
